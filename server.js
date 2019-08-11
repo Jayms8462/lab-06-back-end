@@ -4,7 +4,6 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-let test1 = [];
 
 const PORT = process.env.PORT || 3000;
 
@@ -21,17 +20,21 @@ app.get('/location', (request, response) => {
 
 app.get('/weather', (request, response) => {
     try {
-        let jsonData = require('./data/darksky.json');
-        const test = jsonData.daily.data;
-        for (let i = 0; i < test.length; i++) {
-            new Weather(test[i].time, test[i].summary);
-        }
-        response.send(test1);
+        const jsonData = require("./data/darksky.json");
+        const objVal = Object.values(jsonData.daily.data);
+        const var1 = objVal.map(data => new Weather(data));
+        response.send(var1);
     } catch (error) {
         console.log('There was an error loading the weather data')
     }
 })
 
+function error(err, response) {
+    console.error(err);
+    if (response) {
+        response.status(500).send("Sorry, Try Again Later");
+    }
+}
 //function to be invoked by the get() 
 
 function getData(locationName) {
@@ -46,10 +49,9 @@ function Location(query, jsonData) {
     this.formatted_query = jsonData.results[0].formatted_address, this.latitude = jsonData.results[0].geometry.location.lat, this.longitude = jsonData.results[0].geometry.location.lng
 }
 
-function Weather(time, summary) {
-    this.time = new Date(time * 1000);
-    this.summary = summary;
-    test1.push(this);
+function Weather(data) {
+    this.forecast = data.summary;
+    this.time = new Date(data.time * 1000).toString().slice(0, 15);
 }
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
